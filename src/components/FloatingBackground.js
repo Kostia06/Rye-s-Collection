@@ -27,8 +27,9 @@ export default function FloatingBackground() {
     { Icon: Cherry, color: 'text-red-500', fill: 'fill-red-500' },
   ];
 
-  // Generate 40 floating elements!
-  const floatingElements = Array.from({ length: 40 }, (_, index) => {
+  // Generate floating elements - fewer on mobile
+  const elementCount = typeof window !== 'undefined' && window.innerWidth < 768 ? 15 : 30;
+  const floatingElements = Array.from({ length: elementCount }, (_, index) => {
     const iconData = iconTypes[index % iconTypes.length];
     const sizes = ['w-8 h-8', 'w-10 h-10', 'w-12 h-12', 'w-6 h-6'];
     const size = sizes[index % sizes.length];
@@ -91,13 +92,13 @@ export default function FloatingBackground() {
         );
       })}
 
-      {/* Extra sparkles layer - MORE VISIBLE */}
-      {[...Array(20)].map((_, index) => (
+      {/* Extra sparkles layer - Reduced for performance */}
+      {[...Array(8)].map((_, index) => (
         <motion.div
           key={`sparkle-${index}`}
-          className="absolute text-yellow-400 opacity-80 drop-shadow-md"
+          className="absolute text-yellow-400 opacity-80 drop-shadow-md hidden sm:block"
           style={{
-            left: `${(index * 5) % 100}%`,
+            left: `${(index * 12.5) % 100}%`,
             top: `${100 + (index * 10) % 50}%`,
           }}
           animate={{
@@ -117,13 +118,13 @@ export default function FloatingBackground() {
         </motion.div>
       ))}
 
-      {/* Rotating hearts layer */}
-      {[...Array(15)].map((_, index) => (
+      {/* Rotating hearts layer - Reduced */}
+      {[...Array(6)].map((_, index) => (
         <motion.div
           key={`heart-${index}`}
-          className="absolute text-pink-400 opacity-75 drop-shadow-lg"
+          className="absolute text-pink-400 opacity-75 drop-shadow-lg hidden sm:block"
           style={{
-            left: `${(index * 6.67) % 100}%`,
+            left: `${(index * 16.67) % 100}%`,
             top: `${110 + (index * 8) % 40}%`,
           }}
           animate={{
@@ -143,13 +144,13 @@ export default function FloatingBackground() {
         </motion.div>
       ))}
 
-      {/* Star burst layer */}
-      {[...Array(12)].map((_, index) => (
+      {/* Star burst layer - Reduced */}
+      {[...Array(5)].map((_, index) => (
         <motion.div
           key={`star-${index}`}
-          className="absolute text-yellow-500 opacity-80 drop-shadow-xl"
+          className="absolute text-yellow-500 opacity-80 drop-shadow-xl hidden sm:block"
           style={{
-            left: `${(index * 8.33) % 100}%`,
+            left: `${(index * 20) % 100}%`,
             top: `${105 + (index * 7) % 45}%`,
           }}
           animate={{

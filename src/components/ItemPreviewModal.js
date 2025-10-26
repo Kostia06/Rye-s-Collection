@@ -85,9 +85,9 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
               <X className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </motion.button>
 
-            {/* Floating sparkles inside modal */}
+            {/* Floating sparkles inside modal - Hidden on mobile for performance */}
             <motion.div
-              className="absolute top-10 left-10 text-yellow-400 pointer-events-none"
+              className="absolute top-10 left-10 text-yellow-400 pointer-events-none hidden md:block"
               animate={{
                 scale: [0, 1, 0],
                 rotate: [0, 180, 360],
@@ -97,7 +97,7 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
               <Sparkles className="w-4 h-4 fill-yellow-400" />
             </motion.div>
             <motion.div
-              className="absolute top-16 right-14 text-pink-400 pointer-events-none"
+              className="absolute top-16 right-14 text-pink-400 pointer-events-none hidden md:block"
               animate={{
                 scale: [0, 1, 0],
                 rotate: [0, -180, -360],
@@ -133,16 +133,16 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
                     </div>
                   )}
 
-                  {/* Corner decorations */}
+                  {/* Corner decorations - Hidden on mobile for performance */}
                   <motion.div
-                    className="absolute top-2 left-2 text-yellow-400"
+                    className="absolute top-2 left-2 text-yellow-400 hidden sm:block"
                     animate={{ rotate: [0, 360] }}
                     transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
                   >
                     <Star className="w-5 h-5 sm:w-6 sm:h-6 fill-yellow-400 opacity-80" />
                   </motion.div>
                   <motion.div
-                    className="absolute bottom-2 right-2 text-pink-400"
+                    className="absolute bottom-2 right-2 text-pink-400 hidden sm:block"
                     animate={{ scale: [1, 1.3, 1] }}
                     transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
                   >

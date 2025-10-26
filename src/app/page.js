@@ -173,36 +173,16 @@ export default function Home() {
               animate={{ scale: 1 }}
               transition={{ type: 'spring', duration: 0.8 }}
             >
-              <motion.div
-                animate={{ rotate: [0, 360] }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-              >
-                <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500 fill-purple-500" />
-              </motion.div>
+              <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500 fill-purple-500" />
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">
                 My Collection
               </h1>
-              <motion.div
-                animate={{ rotate: [0, -360] }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-              >
-                <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-pink-500 fill-pink-500" />
-              </motion.div>
+              <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-pink-500 fill-pink-500" />
             </motion.div>
             <div className="flex items-center justify-center gap-2">
-              <motion.div
-                animate={{ scale: [1, 1.3, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              >
-                <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-pink-500 fill-pink-500" />
-              </motion.div>
+              <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-pink-500 fill-pink-500" />
               <p className="text-purple-600 text-xs sm:text-sm font-semibold">Admin Mode</p>
-              <motion.div
-                animate={{ scale: [1, 1.3, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity, delay: 0.75 }}
-              >
-                <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-pink-500 fill-pink-500" />
-              </motion.div>
+              <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-pink-500 fill-pink-500" />
             </div>
           </div>
 
@@ -257,52 +237,16 @@ export default function Home() {
         {/* Header */}
         <div className="text-center mb-8 sm:mb-12">
           <motion.div
-            className="flex items-center justify-center gap-3 sm:gap-4 mb-3 sm:mb-4"
+            className="flex items-center justify-center gap-3 sm:gap-4"
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.5, type: 'spring' }}
           >
-            <motion.div
-              animate={{
-                rotate: [0, 360],
-                scale: [1, 1.2, 1]
-              }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-            >
-              <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-purple-500 fill-purple-500" />
-            </motion.div>
+            <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-purple-500 fill-purple-500" />
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">
               My Collection
             </h1>
-            <motion.div
-              animate={{
-                rotate: [0, -360],
-                scale: [1, 1.2, 1]
-              }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-            >
-              <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-pink-500 fill-pink-500" />
-            </motion.div>
-          </motion.div>
-          <motion.div
-            className="flex items-center justify-center gap-2 sm:gap-3 text-purple-600 text-base sm:text-lg font-medium"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <motion.div
-              animate={{ scale: [1, 1.4, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-pink-500 fill-pink-500" />
-            </motion.div>
-            <span>Welcome to my treasures</span>
-            <motion.div
-              animate={{ scale: [1, 1.4, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity, delay: 0.75 }}
-            >
-              <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-pink-500 fill-pink-500" />
-            </motion.div>
+            <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-pink-500 fill-pink-500" />
           </motion.div>
         </div>
 
@@ -332,68 +276,17 @@ export default function Home() {
         <CollectionGrid items={filteredItems} loading={loading} view={view} />
       </div>
 
-      {/* Floating Admin Access Button - Super Cute & Mobile-Friendly! */}
+      {/* Floating Admin Access Button */}
       <motion.a
         href="/admin"
-        className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 hover:from-purple-600 hover:via-pink-600 hover:to-purple-600 text-white px-4 py-3 sm:px-6 sm:py-4 rounded-full shadow-2xl z-50 flex items-center gap-2 sm:gap-3 font-bold text-sm sm:text-base"
-        whileHover={{
-          scale: 1.15,
-          boxShadow: '0 0 40px rgba(236, 72, 153, 0.8)'
-        }}
-        whileTap={{ scale: 0.9 }}
-        animate={{
-          y: [0, -15, 0],
-        }}
-        transition={{
-          y: {
-            duration: 2,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          },
-        }}
+        className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 hover:from-purple-600 hover:via-pink-600 hover:to-purple-600 text-white px-4 py-3 sm:px-6 sm:py-4 rounded-full shadow-lg z-50 flex items-center gap-2 sm:gap-3 font-bold text-sm sm:text-base transition-all"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         title="Admin Access"
       >
-        <motion.div
-          animate={{ rotate: [0, 360] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-        >
-          <Lock className="w-5 h-5 sm:w-6 sm:h-6" />
-        </motion.div>
+        <Lock className="w-5 h-5 sm:w-6 sm:h-6" />
         <span className="text-base sm:text-lg">Admin</span>
-        <motion.div
-          animate={{
-            rotate: [0, -360],
-            scale: [1, 1.3, 1]
-          }}
-          transition={{
-            rotate: { duration: 3, repeat: Infinity, ease: 'linear' },
-            scale: { duration: 1, repeat: Infinity }
-          }}
-        >
-          <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-300 fill-yellow-300" />
-        </motion.div>
-
-        {/* Sparkle effects */}
-        <motion.div
-          className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2"
-          animate={{
-            scale: [1, 1.8, 1],
-            rotate: [0, 180, 360],
-          }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-300 fill-yellow-300" />
-        </motion.div>
-        <motion.div
-          className="absolute -bottom-1 -left-1 sm:-bottom-2 sm:-left-2"
-          animate={{
-            scale: [1, 1.6, 1],
-            rotate: [0, -180, -360],
-          }}
-          transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
-        >
-          <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-300 fill-yellow-300" />
-        </motion.div>
+        <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-300 fill-yellow-300" />
       </motion.a>
 
       {/* Random Item Preview Modal */}
