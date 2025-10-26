@@ -6,6 +6,9 @@ import { X, Heart, Sparkles, Star, Crown, Gift } from 'lucide-react';
 export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isLiked, onToggleLike }) {
   if (!item) return null;
 
+  // Check if mobile for animation optimization
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -63,10 +66,10 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
           </motion.div>
 
           <motion.div
-            initial={{ scale: 0.5, rotate: -10, opacity: 0 }}
-            animate={{ scale: 1, rotate: 0, opacity: 1 }}
-            exit={{ scale: 0.5, rotate: 10, opacity: 0 }}
-            transition={{ type: 'spring', duration: 0.5 }}
+            initial={isMobile ? { opacity: 0 } : { scale: 0.5, rotate: -10, opacity: 0 }}
+            animate={isMobile ? { opacity: 1 } : { scale: 1, rotate: 0, opacity: 1 }}
+            exit={isMobile ? { opacity: 0 } : { scale: 0.5, rotate: 10, opacity: 0 }}
+            transition={isMobile ? { duration: 0.2 } : { type: 'spring', duration: 0.5 }}
             onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative"
           >
@@ -79,7 +82,7 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
             <motion.button
               onClick={onClose}
               className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 sm:p-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-full shadow-lg z-20"
-              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileHover={isMobile ? {} : { scale: 1.1, rotate: 90 }}
               whileTap={{ scale: 0.9 }}
             >
               <X className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -113,7 +116,7 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
                 <motion.div
                   className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 shadow-xl"
                   layoutId={`image-${item.id}`}
-                  whileHover={{ scale: 1.02 }}
+                  whileHover={isMobile ? {} : { scale: 1.02 }}
                   transition={{ type: 'spring', stiffness: 300 }}
                 >
                   {item.image_url ? (
@@ -156,9 +159,9 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
                 {/* Title */}
                 <motion.h2
                   className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent mb-4"
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
+                  initial={isMobile ? {} : { x: -20, opacity: 0 }}
+                  animate={isMobile ? {} : { x: 0, opacity: 1 }}
+                  transition={isMobile ? {} : { delay: 0.2 }}
                 >
                   {item.title}
                 </motion.h2>
@@ -167,13 +170,13 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
                 {item.category && (
                   <motion.div
                     className="mb-4 sm:mb-6"
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: 0.3 }}
+                    initial={isMobile ? {} : { x: -20, opacity: 0 }}
+                    animate={isMobile ? {} : { x: 0, opacity: 1 }}
+                    transition={isMobile ? {} : { delay: 0.3 }}
                   >
                     <motion.span
                       className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-100 via-pink-100 to-purple-100 text-purple-700 text-sm font-bold rounded-full shadow-md"
-                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileHover={isMobile ? {} : { scale: 1.05, y: -2 }}
                     >
                       <motion.div
                         animate={{ rotate: [0, 360] }}
@@ -190,9 +193,9 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
                 {item.description && (
                   <motion.div
                     className="flex-1"
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.4 }}
+                    initial={isMobile ? {} : { y: 20, opacity: 0 }}
+                    animate={isMobile ? {} : { y: 0, opacity: 1 }}
+                    transition={isMobile ? {} : { delay: 0.4 }}
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <Sparkles className="w-5 h-5 text-purple-500 fill-purple-500" />
@@ -209,9 +212,9 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
                 {/* Decorative bottom border with animation */}
                 <motion.div
                   className="mt-6 h-2 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 rounded-full relative overflow-hidden"
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 0.5, delay: 0.5, ease: 'easeInOut' }}
+                  initial={isMobile ? {} : { scaleX: 0 }}
+                  animate={isMobile ? {} : { scaleX: 1 }}
+                  transition={isMobile ? {} : { duration: 0.5, delay: 0.5, ease: 'easeInOut' }}
                 >
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent"
@@ -225,12 +228,12 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
             {/* Floating Like Button - Bottom Right */}
             <motion.div
               className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-10"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.3, type: 'spring' }}
+              initial={isMobile ? {} : { scale: 0 }}
+              animate={isMobile ? {} : { scale: 1 }}
+              transition={isMobile ? {} : { delay: 0.3, type: 'spring' }}
             >
               <motion.button
-                whileHover={{ scale: 1.2 }}
+                whileHover={isMobile ? {} : { scale: 1.2 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={onToggleLike}
                 className="flex flex-col items-center gap-1 relative bg-white rounded-full p-3 shadow-2xl"
