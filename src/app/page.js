@@ -1,18 +1,35 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Star, Lock } from 'lucide-react';
+import { Sparkles, Star, Lock, Heart, Crown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import AdminLogin from '@/components/AdminLogin';
 import AdminPanel from '@/components/AdminPanel';
 import CollectionGrid from '@/components/CollectionGrid';
+import SearchBar from '@/components/SearchBar';
+import CategoryFilter from '@/components/CategoryFilter';
+import SortControl from '@/components/SortControl';
+import ViewToggle from '@/components/ViewToggle';
+import RandomItemButton from '@/components/RandomItemButton';
+import ItemPreviewModal from '@/components/ItemPreviewModal';
+import FloatingBackground from '@/components/FloatingBackground';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [sortBy, setSortBy] = useState('newest');
+  const [view, setView] = useState('grid');
+  const [randomItem, setRandomItem] = useState(null);
+  const [showRandomPreview, setShowRandomPreview] = useState(false);
+
+  // Refs for admin functions
+  const editItemRef = useRef(null);
+  const deleteItemRef = useRef(null);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -24,7 +41,17 @@ export default function Home() {
     if (error) {
       console.error('Error fetching items:', error);
     } else {
-      setItems(data || []);
+      // Fetch like counts for each item
+      const itemsWithLikes = await Promise.all(
+        (data || []).map(async (item) => {
+          const { count } = await supabase
+            .from('likes')
+            .select('*', { count: 'exact', head: true })
+            .eq('item_id', item.id);
+          return { ...item, likeCount: count || 0 };
+        })
+      );
+      setItems(itemsWithLikes);
     }
     setLoading(false);
   };
@@ -33,51 +60,189 @@ export default function Home() {
     fetchItems();
   }, []);
 
+  // Get unique categories
+  const categories = useMemo(() => {
+    const uniqueCategories = [...new Set(items.map(item => item.category).filter(Boolean))];
+    return uniqueCategories.sort();
+  }, [items]);
+
+  // Filter and sort items
+  const filteredItems = useMemo(() => {
+    let filtered = items;
+
+    // Apply category filter
+    if (selectedCategory !== 'All') {
+      filtered = filtered.filter(item => item.category === selectedCategory);
+    }
+
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase();
+      filtered = filtered.filter(item =>
+        item.title?.toLowerCase().includes(search) ||
+        item.description?.toLowerCase().includes(search) ||
+        item.category?.toLowerCase().includes(search)
+      );
+    }
+
+    // Apply sorting
+    const sorted = [...filtered];
+    switch (sortBy) {
+      case 'newest':
+        sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        break;
+      case 'oldest':
+        sorted.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        break;
+      case 'mostLiked':
+        sorted.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0));
+        break;
+      case 'alphabetical':
+        sorted.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      default:
+        break;
+    }
+
+    return sorted;
+  }, [items, searchTerm, selectedCategory, sortBy]);
+
+  // Random item picker
+  const handleRandomItem = () => {
+    if (filteredItems.length === 0) return;
+    const randomIndex = Math.floor(Math.random() * filteredItems.length);
+    setRandomItem(filteredItems[randomIndex]);
+    setShowRandomPreview(true);
+  };
+
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+      <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+        <FloatingBackground />
+        <div className="relative z-10 flex items-center gap-4">
+          <motion.div
+            animate={{
+              rotate: 360,
+              scale: [1, 1.2, 1]
+            }}
+            transition={{
+              rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+              scale: { duration: 1, repeat: Infinity }
+            }}
+          >
+            <Sparkles className="w-16 h-16 text-purple-500 fill-purple-500 drop-shadow-2xl" />
+          </motion.div>
+          <motion.div
+            animate={{
+              scale: [1, 1.3, 1],
+            }}
+            transition={{ duration: 1.2, repeat: Infinity }}
+          >
+            <Star className="w-16 h-16 text-yellow-500 fill-yellow-500 drop-shadow-2xl" />
+          </motion.div>
+          <motion.div
+            animate={{
+              scale: [1, 1.4, 1],
+            }}
+            transition={{ duration: 0.8, repeat: Infinity }}
+          >
+            <Heart className="w-16 h-16 text-pink-500 fill-pink-500 drop-shadow-2xl" />
+          </motion.div>
+        </div>
+        <motion.p
+          className="mt-8 text-2xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent relative z-10"
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
         >
-          <Sparkles className="w-12 h-12 text-purple-500" />
-        </motion.div>
+          Loading magic...
+        </motion.p>
       </div>
     );
   }
 
   if (user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="min-h-screen relative overflow-hidden">
+        <FloatingBackground />
+        <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-7xl relative z-10">
           {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
-          >
+          <div className="text-center mb-6 sm:mb-8">
             <motion.div
-              className="inline-block mb-4"
-              animate={{
-                y: [0, -10, 0],
-                rotate: [0, 5, -5, 0],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
+              className="flex items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-3"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', duration: 0.8 }}
             >
-              <Sparkles className="w-16 h-16 text-purple-500 mx-auto" />
+              <motion.div
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+              >
+                <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500 fill-purple-500" />
+              </motion.div>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">
+                My Collection
+              </h1>
+              <motion.div
+                animate={{ rotate: [0, -360] }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+              >
+                <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-pink-500 fill-pink-500" />
+              </motion.div>
             </motion.div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">
-              My Precious Collection
-            </h1>
-            <p className="text-gray-600 text-lg">Admin Mode - Manage your treasures</p>
-          </motion.div>
+            <div className="flex items-center justify-center gap-2">
+              <motion.div
+                animate={{ scale: [1, 1.3, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-pink-500 fill-pink-500" />
+              </motion.div>
+              <p className="text-purple-600 text-xs sm:text-sm font-semibold">Admin Mode</p>
+              <motion.div
+                animate={{ scale: [1, 1.3, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity, delay: 0.75 }}
+              >
+                <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-pink-500 fill-pink-500" />
+              </motion.div>
+            </div>
+          </div>
 
-          <AdminPanel items={items} onItemsChange={fetchItems} />
-          <CollectionGrid items={items} loading={loading} />
+          <AdminPanel
+            items={items}
+            onItemsChange={fetchItems}
+            onEditItem={editItemRef}
+            onDeleteItem={deleteItemRef}
+          />
+
+          {/* Controls Row */}
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <RandomItemButton
+              onClick={handleRandomItem}
+              disabled={filteredItems.length === 0}
+            />
+            <ViewToggle view={view} onViewChange={setView} />
+          </div>
+
+          {/* Search Bar */}
+          <SearchBar onSearchChange={setSearchTerm} itemCount={filteredItems.length} />
+
+          {/* Category Filter */}
+          <CategoryFilter
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+          />
+
+          {/* Sort Control */}
+          <SortControl sortBy={sortBy} onSortChange={setSortBy} />
+
+          <CollectionGrid
+            items={filteredItems}
+            loading={loading}
+            isAdmin={true}
+            onEdit={(item) => editItemRef.current?.(item)}
+            onDelete={(id) => deleteItemRef.current?.(id)}
+            view={view}
+          />
         </div>
       </div>
     );
@@ -85,115 +250,163 @@ export default function Home() {
 
   // Public view (no admin login shown unless accessing /admin)
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
-      {/* Floating decorative elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          className="absolute top-20 left-10"
-          animate={{
-            y: [0, 30, 0],
-            rotate: [0, 10, 0],
-          }}
-          transition={{
-            duration: 5,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        >
-          <Star className="w-8 h-8 text-pink-300 opacity-50" />
-        </motion.div>
-        <motion.div
-          className="absolute top-40 right-20"
-          animate={{
-            y: [0, -30, 0],
-            rotate: [0, -10, 0],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        >
-          <Sparkles className="w-10 h-10 text-purple-300 opacity-50" />
-        </motion.div>
-        <motion.div
-          className="absolute bottom-40 left-1/4"
-          animate={{
-            y: [0, 20, 0],
-            x: [0, 10, 0],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        >
-          <Star className="w-6 h-6 text-blue-300 opacity-50" />
-        </motion.div>
-      </div>
+    <div className="min-h-screen relative overflow-hidden">
+      <FloatingBackground />
 
-      <div className="container mx-auto px-4 py-12 md:py-20 max-w-7xl relative z-10">
+      <div className="container mx-auto px-3 sm:px-4 py-8 sm:py-12 md:py-20 max-w-7xl relative z-10">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-16"
-        >
+        <div className="text-center mb-8 sm:mb-12">
           <motion.div
-            className="inline-block mb-6"
-            animate={{
-              y: [0, -15, 0],
-              rotate: [0, 10, -10, 0],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
+            className="flex items-center justify-center gap-3 sm:gap-4 mb-3 sm:mb-4"
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, type: 'spring' }}
           >
-            <Sparkles className="w-20 h-20 text-purple-500 mx-auto filter drop-shadow-lg" />
+            <motion.div
+              animate={{
+                rotate: [0, 360],
+                scale: [1, 1.2, 1]
+              }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+            >
+              <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-purple-500 fill-purple-500" />
+            </motion.div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">
+              My Collection
+            </h1>
+            <motion.div
+              animate={{
+                rotate: [0, -360],
+                scale: [1, 1.2, 1]
+              }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+            >
+              <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-pink-500 fill-pink-500" />
+            </motion.div>
           </motion.div>
-          <motion.h1
-            className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent"
-            animate={{
-              backgroundPosition: ['0%', '100%', '0%'],
-            }}
-            transition={{
-              duration: 5,
-              repeat: Infinity,
-              ease: "linear"
-            }}
-          >
-            My Precious Collection
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+          <motion.div
+            className="flex items-center justify-center gap-2 sm:gap-3 text-purple-600 text-base sm:text-lg font-medium"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-gray-600 text-lg md:text-xl max-w-2xl mx-auto"
           >
-            Welcome to my little corner of treasures and memories
-          </motion.p>
-        </motion.div>
+            <motion.div
+              animate={{ scale: [1, 1.4, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-pink-500 fill-pink-500" />
+            </motion.div>
+            <span>Welcome to my treasures</span>
+            <motion.div
+              animate={{ scale: [1, 1.4, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity, delay: 0.75 }}
+            >
+              <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-pink-500 fill-pink-500" />
+            </motion.div>
+          </motion.div>
+        </div>
+
+        {/* Controls Row */}
+        <div className="flex flex-wrap items-center justify-center gap-4 mb-6">
+          <RandomItemButton
+            onClick={handleRandomItem}
+            disabled={filteredItems.length === 0}
+          />
+          <ViewToggle view={view} onViewChange={setView} />
+        </div>
+
+        {/* Search Bar */}
+        <SearchBar onSearchChange={setSearchTerm} itemCount={filteredItems.length} />
+
+        {/* Category Filter */}
+        <CategoryFilter
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+        />
+
+        {/* Sort Control */}
+        <SortControl sortBy={sortBy} onSortChange={setSortBy} />
 
         {/* Collection Grid */}
-        <CollectionGrid items={items} loading={loading} />
+        <CollectionGrid items={filteredItems} loading={loading} view={view} />
       </div>
 
-      {/* Floating Admin Access Button */}
+      {/* Floating Admin Access Button - Super Cute & Mobile-Friendly! */}
       <motion.a
         href="/admin"
-        initial={{ opacity: 0, scale: 0 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.5, type: "spring" }}
-        whileHover={{ scale: 1.1 }}
+        className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 hover:from-purple-600 hover:via-pink-600 hover:to-purple-600 text-white px-4 py-3 sm:px-6 sm:py-4 rounded-full shadow-2xl z-50 flex items-center gap-2 sm:gap-3 font-bold text-sm sm:text-base"
+        whileHover={{
+          scale: 1.15,
+          boxShadow: '0 0 40px rgba(236, 72, 153, 0.8)'
+        }}
         whileTap={{ scale: 0.9 }}
-        className="fixed bottom-8 right-8 bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4 rounded-full shadow-2xl hover:shadow-purple-500/50 transition-shadow z-50 flex items-center gap-2"
+        animate={{
+          y: [0, -15, 0],
+        }}
+        transition={{
+          y: {
+            duration: 2,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          },
+        }}
         title="Admin Access"
       >
-        <Lock className="w-5 h-5" />
-        <span className="hidden sm:inline font-semibold">Admin</span>
+        <motion.div
+          animate={{ rotate: [0, 360] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+        >
+          <Lock className="w-5 h-5 sm:w-6 sm:h-6" />
+        </motion.div>
+        <span className="text-base sm:text-lg">Admin</span>
+        <motion.div
+          animate={{
+            rotate: [0, -360],
+            scale: [1, 1.3, 1]
+          }}
+          transition={{
+            rotate: { duration: 3, repeat: Infinity, ease: 'linear' },
+            scale: { duration: 1, repeat: Infinity }
+          }}
+        >
+          <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-300 fill-yellow-300" />
+        </motion.div>
+
+        {/* Sparkle effects */}
+        <motion.div
+          className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2"
+          animate={{
+            scale: [1, 1.8, 1],
+            rotate: [0, 180, 360],
+          }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-300 fill-yellow-300" />
+        </motion.div>
+        <motion.div
+          className="absolute -bottom-1 -left-1 sm:-bottom-2 sm:-left-2"
+          animate={{
+            scale: [1, 1.6, 1],
+            rotate: [0, -180, -360],
+          }}
+          transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
+        >
+          <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-300 fill-yellow-300" />
+        </motion.div>
       </motion.a>
+
+      {/* Random Item Preview Modal */}
+      {randomItem && (
+        <ItemPreviewModal
+          item={randomItem}
+          isOpen={showRandomPreview}
+          onClose={() => setShowRandomPreview(false)}
+          likeCount={randomItem.likeCount || 0}
+          isLiked={false}
+          onToggleLike={() => {}}
+        />
+      )}
     </div>
   );
 }

@@ -2,9 +2,10 @@
 
 import { motion } from 'framer-motion';
 import CollectionCard from './CollectionCard';
+import CollectionListItem from './CollectionListItem';
 import { Sparkles, Package } from 'lucide-react';
 
-export default function CollectionGrid({ items, loading }) {
+export default function CollectionGrid({ items, loading, isAdmin, onEdit, onDelete, view = 'grid' }) {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
@@ -48,10 +49,34 @@ export default function CollectionGrid({ items, loading }) {
     );
   }
 
+  if (view === 'list') {
+    return (
+      <div className="max-w-4xl mx-auto space-y-4">
+        {items.map((item, index) => (
+          <CollectionListItem
+            key={item.id}
+            item={item}
+            index={index}
+            isAdmin={isAdmin}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
       {items.map((item, index) => (
-        <CollectionCard key={item.id} item={item} index={index} />
+        <CollectionCard
+          key={item.id}
+          item={item}
+          index={index}
+          isAdmin={isAdmin}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       ))}
     </div>
   );

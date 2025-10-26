@@ -6,13 +6,14 @@ import { Plus, Edit2, Trash2, LogOut, X, Upload, Image as ImageIcon } from 'luci
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 
-export default function AdminPanel({ items, onItemsChange }) {
+export default function AdminPanel({ items, onItemsChange, onEditItem, onDeleteItem }) {
   const { signOut } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -55,6 +56,31 @@ export default function AdminPanel({ items, onItemsChange }) {
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -145,6 +171,12 @@ export default function AdminPanel({ items, onItemsChange }) {
     }
   };
 
+  // Expose functions for external use
+  useEffect(() => {
+    if (onEditItem) onEditItem.current = openModal;
+    if (onDeleteItem) onDeleteItem.current = handleDelete;
+  }, [onEditItem, onDeleteItem]);
+
   return (
     <div className="mb-8">
       {/* Admin Controls */}
@@ -170,37 +202,17 @@ export default function AdminPanel({ items, onItemsChange }) {
         </motion.button>
       </div>
 
-      {/* Edit/Delete buttons on items */}
+      {/* Hint for editing */}
       {items.length > 0 && (
-        <div className="mt-6 p-4 bg-purple-50 rounded-2xl">
-          <h3 className="font-semibold text-purple-900 mb-3">Manage Items:</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {items.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between bg-white p-3 rounded-xl shadow-sm"
-              >
-                <span className="text-sm font-medium text-gray-700 truncate flex-1">
-                  {item.title}
-                </span>
-                <div className="flex gap-2 ml-2">
-                  <button
-                    onClick={() => openModal(item)}
-                    className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-4 p-4 bg-blue-50 rounded-2xl border-2 border-blue-200"
+        >
+          <p className="text-sm text-blue-800 text-center">
+            ✏️ <span className="font-semibold">Tip:</span> Edit and delete buttons are now on each item card!
+          </p>
+        </motion.div>
       )}
 
       {/* Modal */}
@@ -233,28 +245,57 @@ export default function AdminPanel({ items, onItemsChange }) {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Image Upload */}
+                {/* Image Upload with Drag & Drop */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Image
                   </label>
-                  <div className="flex flex-col items-center">
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`flex flex-col items-center transition-all duration-300 ${
+                      isDragging ? 'scale-105' : ''
+                    }`}
+                  >
                     {imagePreview ? (
-                      <div className="relative w-full aspect-square max-w-sm mb-4 rounded-2xl overflow-hidden">
+                      <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="relative w-full aspect-square max-w-sm mb-4 rounded-2xl overflow-hidden group"
+                      >
                         <img
                           src={imagePreview}
                           alt="Preview"
                           className="w-full h-full object-cover"
                         />
-                      </div>
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <p className="text-white font-semibold">Change Image</p>
+                        </div>
+                      </motion.div>
                     ) : (
-                      <div className="w-full aspect-square max-w-sm mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
-                        <ImageIcon className="w-16 h-16 text-gray-400" />
+                      <div
+                        className={`w-full aspect-square max-w-sm mb-4 rounded-2xl flex flex-col items-center justify-center border-2 border-dashed transition-all ${
+                          isDragging
+                            ? 'border-purple-500 bg-purple-50 scale-105'
+                            : 'border-gray-300 bg-gray-50 hover:border-purple-400 hover:bg-purple-50/50'
+                        }`}
+                      >
+                        <motion.div
+                          animate={isDragging ? { scale: [1, 1.2, 1] } : {}}
+                          transition={{ duration: 0.5, repeat: isDragging ? Infinity : 0 }}
+                        >
+                          <ImageIcon className={`w-16 h-16 mb-4 ${isDragging ? 'text-purple-500' : 'text-gray-400'}`} />
+                        </motion.div>
+                        <p className="text-sm font-medium text-gray-600 mb-1">
+                          {isDragging ? 'Drop your image here!' : 'Drag & drop your image here'}
+                        </p>
+                        <p className="text-xs text-gray-500">or click below to browse</p>
                       </div>
                     )}
-                    <label className="cursor-pointer bg-purple-100 text-purple-700 px-6 py-3 rounded-xl font-semibold hover:bg-purple-200 transition-colors flex items-center gap-2">
+                    <label className="cursor-pointer bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-2">
                       <Upload className="w-5 h-5" />
-                      Choose Image
+                      {imagePreview ? 'Change Image' : 'Choose Image'}
                       <input
                         type="file"
                         accept="image/*"
@@ -266,47 +307,59 @@ export default function AdminPanel({ items, onItemsChange }) {
                 </div>
 
                 {/* Title */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
                     Title *
                   </label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:outline-none transition-colors text-gray-900 placeholder:text-gray-400"
-                    placeholder="Enter item title"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 focus:outline-none transition-all text-gray-900 placeholder:text-gray-400"
+                    placeholder="Give your treasure a name..."
                     required
                   />
-                </div>
+                </motion.div>
 
                 {/* Category */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
                     Category
                   </label>
                   <input
                     type="text"
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:outline-none transition-colors text-gray-900 placeholder:text-gray-400"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-pink-500 focus:ring-4 focus:ring-pink-100 focus:outline-none transition-all text-gray-900 placeholder:text-gray-400"
                     placeholder="e.g., Hirono, Plushies, Figures"
                   />
-                </div>
+                </motion.div>
 
                 {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
                     Description
                   </label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:outline-none transition-colors resize-none text-gray-900 placeholder:text-gray-400"
-                    placeholder="Tell us about this treasure..."
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 focus:outline-none transition-all resize-none text-gray-900 placeholder:text-gray-400"
+                    placeholder="Tell us about this precious treasure..."
                     rows={4}
                   />
-                </div>
+                </motion.div>
 
                 {/* Submit Button */}
                 <div className="flex gap-4">
