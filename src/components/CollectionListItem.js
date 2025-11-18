@@ -106,6 +106,7 @@ export default function CollectionListItem({ item, index, isAdmin, onEdit, onDel
               <img
                 src={item.image_url}
                 alt={item.title}
+                loading="lazy"
                 className="w-full h-full object-cover"
               />
             ) : (

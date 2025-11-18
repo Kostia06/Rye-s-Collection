@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Heart, Sparkles, Edit2, Trash2, Share2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import ItemPreviewModal from './ItemPreviewModal';
+import CardTilt from './CardTilt';
 
 // Generate a simple browser fingerprint for anonymous likes
 const getUserFingerprint = () => {
@@ -23,6 +24,7 @@ export default function CollectionCard({ item, index, isAdmin, onEdit, onDelete 
   const [isLiked, setIsLiked] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [lastClickTime, setLastClickTime] = useState(0);
 
   useEffect(() => {
     fetchLikes();
@@ -99,6 +101,15 @@ export default function CollectionCard({ item, index, isAdmin, onEdit, onDelete 
     alert('Link copied to clipboard! 🔗');
   };
 
+  const handleDoubleClick = async (e) => {
+    const now = Date.now();
+    if (now - lastClickTime < 300 && !isLiked) {
+      // Double click detected and not already liked - trigger like!
+      toggleLike(e);
+    }
+    setLastClickTime(now);
+  };
+
   return (
     <>
       <motion.div
@@ -107,9 +118,13 @@ export default function CollectionCard({ item, index, isAdmin, onEdit, onDelete 
         transition={{ duration: 0.5, delay: index * 0.1 }}
         whileHover={{ y: -8, transition: { duration: 0.2 } }}
         className="group relative cursor-pointer"
-        onClick={() => setShowPreview(true)}
+        onClick={() => {
+          handleDoubleClick({ stopPropagation: () => {} });
+          setShowPreview(true);
+        }}
       >
-        <div className="bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-transparent hover:border-pink-200">
+        <CardTilt>
+          <div className="bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-transparent hover:border-pink-200">
         {/* Admin Controls */}
         {isAdmin && (
           <div className="absolute top-3 left-3 z-20 flex gap-2">
@@ -146,6 +161,7 @@ export default function CollectionCard({ item, index, isAdmin, onEdit, onDelete 
             <motion.img
               src={item.image_url}
               alt={item.title}
+              loading="lazy"
               className="w-full h-full object-cover"
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.3 }}
@@ -221,30 +237,6 @@ export default function CollectionCard({ item, index, isAdmin, onEdit, onDelete 
                 </motion.span>
               )}
 
-              {/* Particle effect when liking */}
-              {isAnimating && isLiked && (
-                <>
-                  <motion.div
-                    initial={{ scale: 1, opacity: 1 }}
-                    animate={{ scale: 2, opacity: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="absolute inset-0 rounded-full bg-pink-400"
-                  />
-                  {[...Array(6)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ scale: 0, x: 0, y: 0 }}
-                      animate={{
-                        scale: [0, 1, 0],
-                        x: Math.cos((i * Math.PI * 2) / 6) * 20,
-                        y: Math.sin((i * Math.PI * 2) / 6) * 20,
-                      }}
-                      transition={{ duration: 0.6 }}
-                      className="absolute w-2 h-2 rounded-full bg-pink-400"
-                    />
-                  ))}
-                </>
-              )}
               </motion.button>
             </div>
           </div>
@@ -277,8 +269,9 @@ export default function CollectionCard({ item, index, isAdmin, onEdit, onDelete 
         </div>
       </div>
 
-        {/* Animated glow effect on hover */}
-        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-20 blur-xl transition-opacity -z-10" />
+          {/* Animated glow effect on hover */}
+          <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-20 blur-xl transition-opacity -z-10" />
+        </CardTilt>
       </motion.div>
 
       {/* Preview Modal */}

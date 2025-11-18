@@ -6,6 +6,53 @@ import { Plus, Edit2, Trash2, LogOut, X, Upload, Image as ImageIcon } from 'luci
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 
+const triggerConfetti = () => {
+  const confetti = [...Array(40)].map((_, i) => ({
+    id: i,
+    emoji: ['🎉', '🎊', '✨', '💎', '🌟', '🎈', '🎁', '💝'][Math.floor(Math.random() * 8)],
+    x: Math.random() * 100,
+    delay: Math.random() * 0.3,
+    duration: 2 + Math.random(),
+  }));
+
+  const container = document.createElement('div');
+  container.style.position = 'fixed';
+  container.style.top = '0';
+  container.style.left = '0';
+  container.style.width = '100%';
+  container.style.height = '100%';
+  container.style.pointerEvents = 'none';
+  container.style.zIndex = '9999';
+  document.body.appendChild(container);
+
+  confetti.forEach(piece => {
+    const el = document.createElement('div');
+    el.textContent = piece.emoji;
+    el.style.position = 'absolute';
+    el.style.left = piece.x + '%';
+    el.style.top = '-20px';
+    el.style.fontSize = '24px';
+    el.style.animation = `fall ${piece.duration}s linear ${piece.delay}s forwards`;
+    container.appendChild(el);
+  });
+
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fall {
+      to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+
+  setTimeout(() => {
+    container.remove();
+    style.remove();
+  }, 3000);
+};
+
 export default function AdminPanel({ items, onItemsChange, onEditItem, onDeleteItem }) {
   const { signOut } = useAuth();
   const [showModal, setShowModal] = useState(false);
@@ -140,6 +187,9 @@ export default function AdminPanel({ items, onItemsChange, onEditItem, onDeleteI
           .insert([itemData]);
 
         if (error) throw error;
+
+        // Trigger confetti celebration!
+        triggerConfetti();
       }
 
       // Refresh items

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Star, Lock, Heart, Crown } from 'lucide-react';
+import { Sparkles, Star, Lock, Heart, Crown, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import AdminLogin from '@/components/AdminLogin';
@@ -15,6 +15,8 @@ import ViewToggle from '@/components/ViewToggle';
 import RandomItemButton from '@/components/RandomItemButton';
 import ItemPreviewModal from '@/components/ItemPreviewModal';
 import FloatingBackground from '@/components/FloatingBackground';
+import KonamiCodeEasterEgg from '@/components/KonamiCodeEasterEgg';
+import StatsModal from '@/components/StatsModal';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -26,6 +28,7 @@ export default function Home() {
   const [view, setView] = useState('grid');
   const [randomItem, setRandomItem] = useState(null);
   const [showRandomPreview, setShowRandomPreview] = useState(false);
+  const [showStatsModal, setShowStatsModal] = useState(false);
 
   // Refs for admin functions
   const editItemRef = useRef(null);
@@ -41,16 +44,26 @@ export default function Home() {
     if (error) {
       console.error('Error fetching items:', error);
     } else {
-      // Fetch like counts for each item
-      const itemsWithLikes = await Promise.all(
-        (data || []).map(async (item) => {
-          const { count } = await supabase
-            .from('likes')
-            .select('*', { count: 'exact', head: true })
-            .eq('item_id', item.id);
-          return { ...item, likeCount: count || 0 };
-        })
-      );
+      // Batch fetch like counts for all items at once
+      const itemIds = (data || []).map(item => item.id);
+      let likeCounts = {};
+
+      if (itemIds.length > 0) {
+        const { data: likeData } = await supabase
+          .from('likes')
+          .select('item_id')
+          .in('item_id', itemIds);
+
+        // Count likes per item
+        (likeData || []).forEach(like => {
+          likeCounts[like.item_id] = (likeCounts[like.item_id] || 0) + 1;
+        });
+      }
+
+      const itemsWithLikes = (data || []).map(item => ({
+        ...item,
+        likeCount: likeCounts[item.id] || 0
+      }));
       setItems(itemsWithLikes);
     }
     setLoading(false);
@@ -117,7 +130,8 @@ export default function Home() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+      <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden" suppressHydrationWarning>
+        <KonamiCodeEasterEgg />
         <FloatingBackground />
         <div className="relative z-10 flex items-center gap-4">
           <motion.div
@@ -162,7 +176,8 @@ export default function Home() {
 
   if (user) {
     return (
-      <div className="min-h-screen relative overflow-hidden">
+      <div className="min-h-screen relative overflow-hidden" suppressHydrationWarning>
+        <KonamiCodeEasterEgg />
         <FloatingBackground />
         <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-7xl relative z-10">
           {/* Header */}
@@ -195,10 +210,21 @@ export default function Home() {
 
           {/* Controls Row */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <RandomItemButton
-              onClick={handleRandomItem}
-              disabled={filteredItems.length === 0}
-            />
+            <div className="flex gap-4">
+              <RandomItemButton
+                onClick={handleRandomItem}
+                disabled={filteredItems.length === 0}
+              />
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowStatsModal(true)}
+                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transition-shadow"
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span className="text-sm">Stats</span>
+              </motion.button>
+            </div>
             <ViewToggle view={view} onViewChange={setView} />
           </div>
 
@@ -224,13 +250,23 @@ export default function Home() {
             view={view}
           />
         </div>
+
+        {/* Stats Modal */}
+        <StatsModal
+          isOpen={showStatsModal}
+          onClose={() => setShowStatsModal(false)}
+          items={items}
+          achievements={[]}
+        />
+
       </div>
     );
   }
 
   // Public view (no admin login shown unless accessing /admin)
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden" suppressHydrationWarning>
+      <KonamiCodeEasterEgg />
       <FloatingBackground />
 
       <div className="container mx-auto px-3 sm:px-4 py-8 sm:py-12 md:py-20 max-w-7xl relative z-10">
@@ -300,6 +336,7 @@ export default function Home() {
           onToggleLike={() => {}}
         />
       )}
+
     </div>
   );
 }

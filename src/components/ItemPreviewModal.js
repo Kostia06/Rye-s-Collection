@@ -2,12 +2,13 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Heart, Sparkles, Star, Crown, Gift } from 'lucide-react';
+import StarRating from './StarRating';
 
 export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isLiked, onToggleLike }) {
   if (!item) return null;
 
-  // Check if mobile for animation optimization
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  // Assume desktop by default for hydration safety
+  const isMobile = false;
 
   return (
     <AnimatePresence>
@@ -19,51 +20,6 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
           onClick={onClose}
           className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 z-50"
         >
-          {/* Floating decorative icons around modal - Hidden on mobile */}
-          <motion.div
-            className="absolute top-10 left-10 text-pink-400 hidden sm:block"
-            animate={{
-              y: [0, -20, 0],
-              rotate: [0, 360],
-              scale: [1, 1.2, 1],
-            }}
-            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <Heart className="w-8 h-8 fill-pink-400 opacity-60" />
-          </motion.div>
-          <motion.div
-            className="absolute top-20 right-16 text-yellow-400 hidden md:block"
-            animate={{
-              y: [0, -15, 0],
-              rotate: [0, -360],
-              scale: [1, 1.3, 1],
-            }}
-            transition={{ duration: 2.5, repeat: Infinity, delay: 0.5, ease: 'easeInOut' }}
-          >
-            <Star className="w-10 h-10 fill-yellow-400 opacity-60" />
-          </motion.div>
-          <motion.div
-            className="absolute bottom-16 left-20 text-purple-400 hidden sm:block"
-            animate={{
-              y: [0, -25, 0],
-              rotate: [0, 360],
-              scale: [1, 1.4, 1],
-            }}
-            transition={{ duration: 3.5, repeat: Infinity, delay: 1, ease: 'easeInOut' }}
-          >
-            <Sparkles className="w-9 h-9 fill-purple-400 opacity-60" />
-          </motion.div>
-          <motion.div
-            className="absolute bottom-20 right-12 text-cyan-400 hidden md:block"
-            animate={{
-              y: [0, -18, 0],
-              rotate: [0, 360],
-              scale: [1, 1.25, 1],
-            }}
-            transition={{ duration: 2.8, repeat: Infinity, delay: 1.5, ease: 'easeInOut' }}
-          >
-            <Gift className="w-8 h-8 fill-cyan-400 opacity-60" />
-          </motion.div>
 
           <motion.div
             initial={isMobile ? { opacity: 0 } : { scale: 0.5, rotate: -10, opacity: 0 }}
@@ -88,27 +44,6 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
               <X className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </motion.button>
 
-            {/* Floating sparkles inside modal - Hidden on mobile for performance */}
-            <motion.div
-              className="absolute top-10 left-10 text-yellow-400 pointer-events-none hidden md:block"
-              animate={{
-                scale: [0, 1, 0],
-                rotate: [0, 180, 360],
-              }}
-              transition={{ duration: 2, repeat: Infinity, delay: 0.5, ease: 'easeInOut' }}
-            >
-              <Sparkles className="w-4 h-4 fill-yellow-400" />
-            </motion.div>
-            <motion.div
-              className="absolute top-16 right-14 text-pink-400 pointer-events-none hidden md:block"
-              animate={{
-                scale: [0, 1, 0],
-                rotate: [0, -180, -360],
-              }}
-              transition={{ duration: 2.5, repeat: Infinity, delay: 1, ease: 'easeInOut' }}
-            >
-              <Sparkles className="w-5 h-5 fill-pink-400" />
-            </motion.div>
 
             <div className="grid md:grid-cols-2 gap-4 sm:gap-6 p-4 sm:p-6 md:p-8 relative z-10">
               {/* Image side */}
@@ -136,21 +71,6 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
                     </div>
                   )}
 
-                  {/* Corner decorations - Hidden on mobile for performance */}
-                  <motion.div
-                    className="absolute top-2 left-2 text-yellow-400 hidden sm:block"
-                    animate={{ rotate: [0, 360] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                  >
-                    <Star className="w-5 h-5 sm:w-6 sm:h-6 fill-yellow-400 opacity-80" />
-                  </motion.div>
-                  <motion.div
-                    className="absolute bottom-2 right-2 text-pink-400 hidden sm:block"
-                    animate={{ scale: [1, 1.3, 1] }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                  >
-                    <Heart className="w-5 h-5 sm:w-6 sm:h-6 fill-pink-400 opacity-80" />
-                  </motion.div>
                 </motion.div>
               </div>
 
@@ -166,17 +86,15 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
                   {item.title}
                 </motion.h2>
 
-                {/* Category */}
-                {item.category && (
-                  <motion.div
-                    className="mb-4 sm:mb-6"
-                    initial={isMobile ? {} : { x: -20, opacity: 0 }}
-                    animate={isMobile ? {} : { x: 0, opacity: 1 }}
-                    transition={isMobile ? {} : { delay: 0.3 }}
-                  >
+                {/* Category and Star Rating */}
+                <div className="mb-4 sm:mb-6 flex items-center justify-between flex-wrap gap-3">
+                  {item.category && (
                     <motion.span
                       className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-100 via-pink-100 to-purple-100 text-purple-700 text-sm font-bold rounded-full shadow-md"
                       whileHover={isMobile ? {} : { scale: 1.05, y: -2 }}
+                      initial={isMobile ? {} : { x: -20, opacity: 0 }}
+                      animate={isMobile ? {} : { x: 0, opacity: 1 }}
+                      transition={isMobile ? {} : { delay: 0.3 }}
                     >
                       <motion.div
                         animate={{ rotate: [0, 360] }}
@@ -186,8 +104,9 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
                       </motion.div>
                       {item.category}
                     </motion.span>
-                  </motion.div>
-                )}
+                  )}
+                  <StarRating itemId={item.id} initialRating={item.rating || 0} />
+                </div>
 
                 {/* Description */}
                 {item.description && (
@@ -209,19 +128,8 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
                   </motion.div>
                 )}
 
-                {/* Decorative bottom border with animation */}
-                <motion.div
-                  className="mt-6 h-2 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 rounded-full relative overflow-hidden"
-                  initial={isMobile ? {} : { scaleX: 0 }}
-                  animate={isMobile ? {} : { scaleX: 1 }}
-                  transition={isMobile ? {} : { duration: 0.5, delay: 0.5, ease: 'easeInOut' }}
-                >
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent"
-                    animate={{ x: ['-100%', '200%'] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                  />
-                </motion.div>
+                {/* Decorative bottom border */}
+                <div className="mt-6 h-1 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 rounded-full" />
               </div>
             </div>
 
