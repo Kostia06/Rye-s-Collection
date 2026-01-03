@@ -18,6 +18,16 @@ export const metadata = {
   icons: {
     icon: "/icon.svg",
   },
+  openGraph: {
+    title: "My Precious Collection",
+    description: "A beautiful showcase of my treasured collectibles",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "My Precious Collection",
+    description: "A beautiful showcase of my treasured collectibles",
+  },
 };
 
 export default function RootLayout({ children }) {
