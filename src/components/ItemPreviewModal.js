@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Heart, ChevronDown } from 'lucide-react';
+import { X, Heart, ExternalLink } from 'lucide-react';
 import StarRating from './StarRating';
 
 export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isLiked, onToggleLike }) {
+  const router = useRouter();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -141,6 +143,16 @@ export default function ItemPreviewModal({ item, isOpen, onClose, likeCount, isL
                   <span className="text-xs text-neutral-400 uppercase tracking-wider">
                     {likeCount} {likeCount === 1 ? 'like' : 'likes'}
                   </span>
+                  <button
+                    onClick={() => {
+                      onClose();
+                      router.push(`/collection/${item.id}`);
+                    }}
+                    className="flex items-center gap-1.5 text-xs text-neutral-500 hover:text-[#1a1a1a] transition-colors uppercase tracking-wider"
+                  >
+                    <span>View Full Page</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             </div>

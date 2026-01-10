@@ -96,9 +96,9 @@ export default function CollectionCard({ item, index, isAdmin, onEdit, onDelete 
 
   const handleShare = (e) => {
     e.stopPropagation();
-    const url = `${window.location.origin}?item=${item.id}`;
+    const url = `${window.location.origin}/collection/${item.id}`;
     navigator.clipboard.writeText(url);
-    alert('Link copied to clipboard! 🔗');
+    alert('Link copied to clipboard!');
   };
 
   const handleDoubleClick = async (e) => {
