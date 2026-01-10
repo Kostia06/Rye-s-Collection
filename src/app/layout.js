@@ -19,6 +19,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://ryes-collection.vercel.app'),
   title: "My Precious Collection",
   description: "A beautiful showcase of my treasured collectibles",
   icons: {
