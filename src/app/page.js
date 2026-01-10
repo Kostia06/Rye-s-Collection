@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Sparkles, Star, Lock, Heart, Crown, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,6 +47,8 @@ const itemVariants = {
 };
 
 export default function Home() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +57,14 @@ export default function Home() {
   // Refs for admin functions
   const editItemRef = useRef(null);
   const deleteItemRef = useRef(null);
+
+  // Redirect old ?item= URLs to new /collection/[id] path
+  useEffect(() => {
+    const itemId = searchParams.get('item');
+    if (itemId) {
+      router.replace(`/collection/${itemId}`);
+    }
+  }, [searchParams, router]);
 
   const fetchItems = async () => {
     setLoading(true);
