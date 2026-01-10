@@ -60,51 +60,61 @@ function Navigation() {
   );
 }
 
-// SVG Snake-Path Roadmap - zigzag pattern: right → down → left → down → repeat
+// SVG Snake-Path Roadmap - dynamic zigzag pattern based on total items
 function SnakePathRoadmap({ progress, current, total }) {
-  // SVG path dimensions
+  // Dynamic dimensions based on total items
   const width = 80;
-  const height = 400;
-  const segmentHeight = height / 4; // 4 horizontal segments
+  const rowsNeeded = Math.ceil(total / 2); // Each row holds ~2 items visually
+  const minHeight = 200;
+  const height = Math.max(minHeight, Math.min(500, rowsNeeded * 80));
   const horizontalLength = 50;
   const padding = 15;
+  const verticalSegments = Math.max(2, rowsNeeded);
+  const segmentHeight = (height - padding * 2) / verticalSegments;
 
-  // Build the snake path: right → down → left → down → right → down → left
-  // Starting from top-left, going right first
-  const pathPoints = [
-    `M ${padding} ${padding}`, // Start
-    `H ${padding + horizontalLength}`, // Right
-    `V ${padding + segmentHeight}`, // Down
-    `H ${padding}`, // Left
-    `V ${padding + segmentHeight * 2}`, // Down
-    `H ${padding + horizontalLength}`, // Right
-    `V ${padding + segmentHeight * 3}`, // Down
-    `H ${padding}`, // Left
-    `V ${height - padding}`, // Down to end
-  ];
+  // Build dynamic snake path based on total items
+  const buildSnakePath = () => {
+    const points = [`M ${padding} ${padding}`];
+    let goingRight = true;
 
-  const snakePath = pathPoints.join(' ');
+    for (let i = 0; i < verticalSegments; i++) {
+      if (goingRight) {
+        points.push(`H ${padding + horizontalLength}`);
+      } else {
+        points.push(`H ${padding}`);
+      }
+      if (i < verticalSegments - 1) {
+        points.push(`V ${padding + segmentHeight * (i + 1)}`);
+      }
+      goingRight = !goingRight;
+    }
+    // Final vertical to end
+    points.push(`V ${height - padding}`);
 
-  // Calculate total path length (approximate)
-  const totalLength = (horizontalLength * 4) + (segmentHeight * 4);
+    return points.join(' ');
+  };
+
+  const snakePath = buildSnakePath();
+
+  // Build dynamic segments for position calculation
+  const buildSegments = () => {
+    const segs = [];
+    let goingRight = true;
+
+    for (let i = 0; i < verticalSegments; i++) {
+      segs.push({ length: horizontalLength, type: 'h', dir: goingRight ? 1 : -1 });
+      segs.push({ length: segmentHeight, type: 'v', dir: 1 });
+      goingRight = !goingRight;
+    }
+    return segs;
+  };
+
+  const segments = buildSegments();
+  const totalLength = segments.reduce((acc, seg) => acc + seg.length, 0);
 
   // Calculate dot position along the path
-  const getDotPosition = (progress) => {
-    const pathLength = totalLength;
-    const currentLength = progress * pathLength;
-
-    // Segments: right(50) + down(100) + left(50) + down(100) + right(50) + down(100) + left(50) + down(100)
-    const segments = [
-      { length: horizontalLength, type: 'h', dir: 1 },  // right
-      { length: segmentHeight, type: 'v', dir: 1 },     // down
-      { length: horizontalLength, type: 'h', dir: -1 }, // left
-      { length: segmentHeight, type: 'v', dir: 1 },     // down
-      { length: horizontalLength, type: 'h', dir: 1 },  // right
-      { length: segmentHeight, type: 'v', dir: 1 },     // down
-      { length: horizontalLength, type: 'h', dir: -1 }, // left
-      { length: segmentHeight, type: 'v', dir: 1 },     // down
-    ];
-
+  const getDotPosition = (prog) => {
+    const currentLength = prog * totalLength;
     let x = padding;
     let y = padding;
     let accumulated = 0;
@@ -190,6 +200,41 @@ function SnakePathRoadmap({ progress, current, total }) {
       <span className="mt-4 text-xs text-neutral-400 font-mono tracking-wider">
         {String(current + 1).padStart(2, '0')}/{String(total).padStart(2, '0')}
       </span>
+    </div>
+  );
+}
+
+// Mobile Progress Roadmap - horizontal dots for phones
+function MobileRoadmap({ current, total }) {
+  return (
+    <div className="fixed bottom-20 left-0 right-0 z-50 flex justify-center items-center gap-2 px-4">
+      <div className="bg-white/90 backdrop-blur-md rounded-full px-4 py-2.5 shadow-lg flex items-center gap-3">
+        {/* Progress dots */}
+        <div className="flex items-center gap-1.5">
+          {Array.from({ length: Math.min(total, 12) }).map((_, i) => (
+            <div
+              key={i}
+              className={`rounded-full transition-all duration-300 ${
+                i === current
+                  ? 'w-6 h-2 bg-[#1a1a1a]'
+                  : i < current
+                  ? 'w-2 h-2 bg-[#1a1a1a]'
+                  : 'w-2 h-2 bg-neutral-300'
+              }`}
+            />
+          ))}
+          {total > 12 && (
+            <span className="text-xs text-neutral-400 ml-1">+{total - 12}</span>
+          )}
+        </div>
+
+        {/* Counter */}
+        <div className="border-l border-neutral-200 pl-3">
+          <span className="text-xs font-mono text-neutral-600">
+            {String(current + 1).padStart(2, '0')}/{String(total).padStart(2, '0')}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -317,11 +362,29 @@ function GallerySlide({ item, index, slideRef, captionRef, direction, isVisible 
 }
 
 // Mobile Gallery Card Component - Optimized for touch
-function MobileGalleryCard({ item, index, placeholderImages, artists, directions }) {
+function MobileGalleryCard({ item, index, placeholderImages, artists, directions, onVisible }) {
+  const cardRef = useRef(null);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(item?.likeCount || 0);
   const [showPreview, setShowPreview] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+
+  // Track visibility for roadmap
+  useEffect(() => {
+    if (!cardRef.current || !onVisible) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+          onVisible();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, [onVisible]);
 
   useEffect(() => {
     if (!item?.id || item.id.startsWith('placeholder')) return;
@@ -367,6 +430,7 @@ function MobileGalleryCard({ item, index, placeholderImages, artists, directions
   return (
     <>
       <div
+        ref={cardRef}
         className="relative bg-white rounded-2xl overflow-hidden shadow-sm active:scale-[0.98] transition-transform duration-150"
         onClick={() => setShowPreview(true)}
       >
@@ -455,8 +519,10 @@ export default function CollectionGrid({ items, loading, isAdmin, onEdit, onDele
   const [currentSlide, setCurrentSlide] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isReady, setIsReady] = useState(false);
+  const [mobileCurrentItem, setMobileCurrentItem] = useState(0);
 
-  const totalSlides = 8;
+  // Dynamic total based on actual items - minimum 1 to prevent errors
+  const totalSlides = Math.max(1, items?.length || 0);
 
   // Set ready after mount to ensure refs are populated
   useEffect(() => {
@@ -663,13 +729,13 @@ export default function CollectionGrid({ items, loading, isAdmin, onEdit, onDele
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Prepare display items
+  // Prepare display items - use all items from database
   const displayItems = items?.length > 0
-    ? [...items, ...items, ...items].slice(0, totalSlides)
-    : Array.from({ length: totalSlides }, (_, i) => ({
+    ? items
+    : Array.from({ length: 8 }, (_, i) => ({
         id: `placeholder-${i}`,
         title: `Artwork ${i + 1}`,
-        image_url: placeholderImages[i],
+        image_url: placeholderImages[i % 8],
       }));
 
   // Mobile layout - optimized for phones
@@ -681,7 +747,7 @@ export default function CollectionGrid({ items, loading, isAdmin, onEdit, onDele
           <div className="flex items-center justify-between px-4 py-3">
             <span className="font-serif text-lg text-[#1a1a1a]">Collection</span>
             <span className="text-xs text-neutral-400 tracking-wider">
-              {totalSlides} works
+              {displayItems.length} works
             </span>
           </div>
         </header>
@@ -692,12 +758,12 @@ export default function CollectionGrid({ items, loading, isAdmin, onEdit, onDele
             The<br />Collection
           </h1>
           <p className="mt-4 text-neutral-400 text-sm">
-            Swipe through the gallery
+            Scroll through the gallery
           </p>
         </section>
 
         {/* Mobile Gallery - Full width cards */}
-        <section className="px-4 pb-24 space-y-6">
+        <section className="px-4 pb-32 space-y-6">
           {displayItems.map((item, index) => (
             <MobileGalleryCard
               key={item?.id || index}
@@ -706,12 +772,16 @@ export default function CollectionGrid({ items, loading, isAdmin, onEdit, onDele
               placeholderImages={placeholderImages}
               artists={artists}
               directions={directions}
+              onVisible={() => setMobileCurrentItem(index)}
             />
           ))}
         </section>
 
-        {/* Bottom indicator */}
-        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#faf9f6] to-transparent h-20 pointer-events-none" />
+        {/* Mobile Roadmap */}
+        <MobileRoadmap current={mobileCurrentItem} total={displayItems.length} />
+
+        {/* Bottom gradient */}
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#faf9f6] to-transparent h-16 pointer-events-none" />
       </div>
     );
   }
