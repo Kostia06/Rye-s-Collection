@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Sparkles, Star, Lock, Heart, Crown, BarChart3 } from 'lucide-react';
@@ -11,6 +11,21 @@ import CollectionGrid from '@/components/CollectionGrid';
 import FloatingBackground from '@/components/FloatingBackground';
 import KonamiCodeEasterEgg from '@/components/KonamiCodeEasterEgg';
 import StatsModal from '@/components/StatsModal';
+
+// Component to handle legacy URL redirects
+function LegacyUrlRedirect() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const itemId = searchParams.get('item');
+    if (itemId) {
+      router.replace(`/collection/${itemId}`);
+    }
+  }, [searchParams, router]);
+
+  return null;
+}
 
 // Entrance animation variants matching gallery style
 const containerVariants = {
@@ -47,8 +62,6 @@ const itemVariants = {
 };
 
 export default function Home() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,14 +70,6 @@ export default function Home() {
   // Refs for admin functions
   const editItemRef = useRef(null);
   const deleteItemRef = useRef(null);
-
-  // Redirect old ?item= URLs to new /collection/[id] path
-  useEffect(() => {
-    const itemId = searchParams.get('item');
-    if (itemId) {
-      router.replace(`/collection/${itemId}`);
-    }
-  }, [searchParams, router]);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -109,6 +114,9 @@ export default function Home() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#faf9f6] overflow-hidden" suppressHydrationWarning>
+        <Suspense fallback={null}>
+          <LegacyUrlRedirect />
+        </Suspense>
         <KonamiCodeEasterEgg />
         <motion.div
           variants={containerVariants}
@@ -164,6 +172,9 @@ export default function Home() {
   if (user) {
     return (
       <div className="min-h-screen relative overflow-hidden bg-[#faf9f6]" suppressHydrationWarning>
+        <Suspense fallback={null}>
+          <LegacyUrlRedirect />
+        </Suspense>
         <KonamiCodeEasterEgg />
         <motion.div
           variants={containerVariants}
@@ -235,6 +246,9 @@ export default function Home() {
   // Public view (no admin login shown unless accessing /admin)
   return (
     <div className="min-h-screen overflow-hidden bg-[#faf9f6]" suppressHydrationWarning>
+      <Suspense fallback={null}>
+        <LegacyUrlRedirect />
+      </Suspense>
       <KonamiCodeEasterEgg />
 
       {/* Collection Grid - GSAP Gallery */}
