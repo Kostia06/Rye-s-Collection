@@ -13,13 +13,14 @@ export default function Icon() {
     (
       <div
         style={{
-          background: '#1a1a1a',
+          background: '#ffffff',
           width: '100%',
           height: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           borderRadius: 40,
+          border: '2px solid #e5e5e5',
         }}
       >
         {/* Stylized R letter */}
@@ -36,7 +37,7 @@ export default function Icon() {
               fontFamily: 'Georgia, serif',
               fontSize: 100,
               fontWeight: 700,
-              color: '#faf9f6',
+              color: '#1a1a1a',
               lineHeight: 1,
             }}
           >
@@ -51,7 +52,7 @@ export default function Icon() {
               width: 16,
               height: 16,
               borderRadius: '50%',
-              background: '#faf9f6',
+              background: '#1a1a1a',
             }}
           />
         </div>
