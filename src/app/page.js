@@ -13,10 +13,10 @@ import KonamiCodeEasterEgg from '@/components/KonamiCodeEasterEgg';
 import StatsModal from '@/components/StatsModal';
 import ValentinePage from '@/components/ValentinePage';
 
-// Check if today is Valentine's Day (Feb 14)
+// Check if today is Valentine's Day (Feb 13-14)
 function isValentinesDay() {
   const now = new Date();
-  return now.getMonth() === 1 && now.getDate() === 14;
+  return now.getMonth() === 1 && (now.getDate() === 13 || now.getDate() === 14);
 }
 
 // Component to handle legacy URL redirects
